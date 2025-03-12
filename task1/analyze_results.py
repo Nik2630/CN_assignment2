@@ -533,7 +533,7 @@ def analyze_loss_impact_experiment(base_results_dir, algo_variants, packet_loss_
             summary_output_stream.write("-" * 80 + "\n")
         print(f"Summary for {packet_loss_percentage}% loss experiment saved to '{summary_loss_file}'.")
 
-def orchestrate_analysis():
+def main():
     argument_parser = argparse.ArgumentParser(description='Analyze TCP congestion control experiment outcomes')
     argument_parser.add_argument('--experiment', choices=['a', 'b', 'c', 'd1', 'd5', 'all'], default='all',
                                  help='Select experiment for analysis (a, b, c, d1, d5, or all)')
@@ -543,35 +543,24 @@ def orchestrate_analysis():
 
     congestion_algorithms = ['reno', 'bic', 'highspeed']
 
-    experiments_to_analyze = {}
-
     if selected_experiment in ['a', 'all']:
-        experiments_to_analyze['a'] = {'dir': 'results/experiment_a', 'funcs': [generate_throughput_graph, generate_window_size_graph, generate_summary_report]}
+        generate_throughput_graph('results/experiment_a', congestion_algorithms)
+        generate_window_size_graph('results/experiment_a', congestion_algorithms)
+        generate_summary_report('results/experiment_a', congestion_algorithms)
+    
     if selected_experiment in ['b', 'all']:
-        experiments_to_analyze['b'] = {'dir': 'results/experiment_b', 'funcs': [analyze_staggered_start_experiment]}
+        analyze_staggered_start_experiment('results/experiment_b', congestion_algorithms)
+
     if selected_experiment in ['c', 'all']:
-        experiments_to_analyze['c'] = {'dir': 'results/experiment_c', 'funcs': [analyze_bandwidth_variation_experiment]}
+        analyze_bandwidth_variation_experiment('results/experiment_c', congestion_algorithms)
+
     if selected_experiment in ['d1', 'all']:
-        experiments_to_analyze['d1'] = {'dir': 'results/experiment_d_1', 'funcs': [(analyze_loss_impact_experiment, {'loss_rate': 1})]}
+        analyze_loss_impact_experiment('results/experiment_d_1', congestion_algorithms, 1)
+
     if selected_experiment in ['d5', 'all']:
-        experiments_to_analyze['d5'] = {'dir': 'results/experiment_d_5', 'funcs': [(analyze_loss_impact_experiment, {'loss_rate': 5})]}
-
-    for exp_key, exp_config in experiments_to_analyze.items():
-        result_directory = exp_config['dir']
-        analysis_functions = exp_config['funcs']
-
-        if os.path.isdir(result_directory):
-            for analysis_function_data in analysis_functions:
-                if isinstance(analysis_function_data, tuple):
-                    analysis_function, params = analysis_function_data
-                    if 'loss_rate' in params:
-                        analysis_function(result_directory, congestion_algorithms, params['loss_rate'])
-                    else:
-                        analysis_function(result_directory, congestion_algorithms)
-                else:
-                    analysis_function(result_directory, congestion_algorithms)
+        analyze_loss_impact_experiment('results/experiment_d_5', congestion_algorithms, 5)
 
     print("Experiment analysis completed!")
 
 if __name__ == '__main__':
-    orchestrate_analysis()
+    main()
